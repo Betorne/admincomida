@@ -66,6 +66,17 @@ return [
     */
 
     'timezone' => env('APP_TIMEZONE', 'UTC'),   
+    Illuminate\Filesystem\FilesystemServiceProvider::class,
+    'timezone' => env('APP_TIMEZONE', 'America/Santiago'),
+
+
+  
+        Maatwebsite\Excel\ExcelServiceProvider::class,
+        Barryvdh\DomPDF\ServiceProvider::class,
+   
+        'Excel' => Maatwebsite\Excel\Facades\Excel::class,
+        'PDF'   => Barryvdh\DomPDF\Facade::class,
+ 
 
     /*
     |--------------------------------------------------------------------------

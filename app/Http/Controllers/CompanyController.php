@@ -10,6 +10,29 @@ class CompanyController extends Controller
     /**
      * Display a listing of the resource.
      */
+
+        /**
+         * Display a listing of workers for the given company.
+         */
+       public function workers(Company $company, Request $request)
+    {
+        $search = $request->input('search');
+
+        $workers = $company
+            ->workers()
+            ->when($search, function($q) use ($search) {
+                $q->where('name',  'like', "%{$search}%")
+                  ->orWhere('rut',   'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%");
+            })
+            ->orderBy('name')
+            ->paginate(10)
+            ->withQueryString();
+
+        return view('companies.workers', compact('company', 'workers', 'search'));
+    }
+
     public function index()
     {
         return view('companies.index', ['companies' => Company::all()]);

@@ -10,5 +10,6 @@ class Company extends Model
 
     public function workers() {
     return $this->hasMany(Worker::class);
+
     }
 }

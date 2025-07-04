@@ -12,6 +12,7 @@ class MealRecordController extends Controller
 public function create()
 {
     $services = ServiceType::where('active', true)->get();
+
     $recent = MealRecord::with('worker', 'serviceType')
         ->latest('registered_at')
         ->take(10)
@@ -24,6 +25,7 @@ public function store(Request $request)
 {
     $request->validate([
         'rut' => 'required|string',
+        'service_type_id' => 'required|exists:service_types,id',
     ]);
 
     // 1. Buscar al trabajador
@@ -32,28 +34,11 @@ public function store(Request $request)
         return back()->with('error', 'Trabajador no encontrado');
     }
 
- $now = now()->format('H:i:s');
-$service = ServiceType::where('active', true)
-    ->where('auto_activate', true)
-    ->where(function($q) use($now) {
-        // Caso normal: inicio ≤ fin y ahora entre ellos
-        $q->where(function($q2) use($now) {
-            $q2->whereTime('start_time', '<=', $now)
-               ->whereTime('end_time',   '>=', $now);
-        })
-        // Caso medianoche: inicio > fin y (ahora ≥ inicio OR ahora ≤ fin)
-        ->orWhere(function($q2) use($now) {
-            $q2->whereRaw('start_time > end_time')
-               ->where(function($q3) use($now) {
-                   $q3->whereTime('start_time', '<=', $now)
-                      ->orWhereTime('end_time', '>=', $now);
-               });
-        });
-    })
-    ->first();
+    $now = now()->format('H:i:s');
+    $service =$request->service_type_id;
+  
 
-
-    
+   
 
 
     if (! $service) {
@@ -63,10 +48,10 @@ $service = ServiceType::where('active', true)
     // 3. Crear el registro
     MealRecord::create([
         'worker_id'       => $worker->id,
-        'service_type_id' => $service->id,
+        'service_type_id' => $service,
         'registered_at'   => now(),
     ]);
 
-    return back()->with('success', 'Comida registrada: '.$service->name);
+    return back()->with('success', 'Comida registrada: '.$service);
 }
 }

@@ -11,10 +11,24 @@ class WorkerController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-         return view('workers.index', ['workers' => Worker::all()]);
-    }
+      
+         $search = $request->input('search');
+
+            $workers = Worker::query()
+                ->when($search, function($q) use ($search) {
+                    $q->where('name',    'like', "%{$search}%")
+                    ->orWhere('rut',    'like', "%{$search}%")
+                    ->orWhere('email',  'like', "%{$search}%")
+                    ->orWhere('phone',  'like', "%{$search}%");
+                })
+                ->orderBy('name')
+                ->paginate(15)
+                ->appends(['search' => $search]);
+
+            return view('workers.index', compact('workers', 'search'));
+            }
 
     /**
      * Show the form for creating a new resource.

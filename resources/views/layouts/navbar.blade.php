@@ -17,6 +17,13 @@
             <li>
                 <a href="{{ route('meal.create') }}" class="hover:text-yellow-400">Registro de Comida</a>
             </li>
+             <!-- Nuevo enlace a Reportes -->
+                <li>
+        <a href="{{ route('reports.index') }}"
+           class="ml-4 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100">
+          Reportes
+        </a>
+        </li>
         </ul>
     </div>
 </nav>
