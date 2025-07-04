@@ -33,8 +33,25 @@
                    class="border px-4 py-2 w-full"  required>
         </div>
 
-        {{-- Tipo de servicio activo… (igual que antes) --}}
-        {{-- … --}}
+        {{-- Tipo de servicio --}}
+    @if($services->count() > 1)
+      <div>
+        <label for="service_type_id" class="block font-medium">Tipo de servicio:</label>
+        <select name="service_type_id" id="service_type_id" class="border px-4 py-2 w-full" required>
+          @foreach($services as $s)
+            <option value="{{ $s->id }}">{{ $s->name }} ({{ $s->start_time }}–{{ $s->end_time }})</option>
+          @endforeach
+        </select>
+      </div>
+    @elseif($services->count() === 1)
+      @php $s = $services->first() @endphp
+      <div class="px-4 py-2 border bg-gray-100 rounded">
+        {{ $s->name }} ({{ $s->start_time }}–{{ $s->end_time }})
+      </div>
+      <input type="hidden" name="service_type_id" value="{{ $s->id }}">
+    @else
+      <div class="text-red-600">No hay servicios activos.</div>
+    @endif
 
         <button type="submit"
                 class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 w-full">
