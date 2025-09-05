@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>Registro de Colaciones</title>
+        @vite('resources/css/app.css')
+
     <script src="https://cdn.tailwindcss.com"></script>
     @section('head')
     <!-- DataTables CSS -->
@@ -17,15 +19,7 @@
 </head>
 <body class="bg-gray-100 text-gray-900">
     @include('layouts.navbar')
-    <div class="min-h-screen p-6">
-        <header class="mb-6">
-            <h1 class="text-3xl font-bold">Sistema de Comidas</h1>
-        </header>
-
-        <main>
-            @yield('content')
-        </main>
-    </div>
+   
 @section('scripts')
     <!-- jQuery + DataTables JS -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>

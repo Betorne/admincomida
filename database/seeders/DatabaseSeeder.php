@@ -18,10 +18,10 @@ class DatabaseSeeder extends Seeder
     $this->call([
         CompanySeeder::class,
         WorkerSeeder::class,
-        ServiceTypeSeeder::class,
+        //ServiceTypeSeeder::class,
         MealRecordSeeder::class,
+        //RolesAndPermissionsSeeder::class,
     ]);
-
 
         User::factory()->create([
             'name' => 'Test User',

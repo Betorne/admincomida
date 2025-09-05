@@ -1,148 +1,223 @@
 @extends('layouts.app')
 
 @section('content')
-    <h1 class="text-2xl font-bold mb-4">Registro de comida (OCR Automático)</h1>
-
-    {{-- Selector de cámara --}}
-    <div class="mb-4 max-w-md mx-auto">
-        <label for="cameraSelect" class="block font-medium mb-1">Elige cámara:</label>
-        <select id="cameraSelect" class="border px-4 py-2 w-full"></select>
-    </div>
-
-    {{-- Video + guía de posicionamiento --}}
-    <div class="relative mb-4 max-w-md mx-auto">
-        <video id="video" class="w-full rounded border" autoplay muted playsinline></video>
-        <div id="guide"
-             class="absolute border-4 border-yellow-400 rounded"
-             style="top: 30%; left: 15%; width: 70%; height: 40%; pointer-events: none;">
-        </div>
-    </div>
-
-    <div class="mb-4">
-        <span id="status" class="text-gray-600"></span>
-    </div>
-
+    
     {{-- Formulario --}}
-    <form action="{{ route('meal.store') }}" method="POST" class="space-y-4 max-w-md mx-auto">
+<form id="meal-form" action="{{ route('meal.store') }}" method="POST" class="space-y-4 max-w-md mx-auto">
         @csrf
-        <input type="hidden" name="worker_id" id="worker_id">
+        <input type="hidden" name="worker_id" id="worker_id"  >
 
         <div>
             <label for="rut" class="block font-medium">RUT detectado:</label>
-            <input type="text" id="rut" name="rut"
-                   class="border px-4 py-2 w-full"  required>
+                    @error('rut') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
+
+<input
+  type="text"
+  id="rut"
+  name="rut"
+  class="border px-4 py-2 w-full"
+  placeholder="12345678-9"
+  pattern="^\d{5,8}-[0-9K]$"
+  inputmode="text"
+  autocomplete="off"
+  autofocus
+  required
+/>
         </div>
 
         {{-- Tipo de servicio --}}
-    @if($services->count() > 1)
-      <div>
-        <label for="service_type_id" class="block font-medium">Tipo de servicio:</label>
-        <select name="service_type_id" id="service_type_id" class="border px-4 py-2 w-full" required>
-          @foreach($services as $s)
-            <option value="{{ $s->id }}">{{ $s->name }} ({{ $s->start_time }}–{{ $s->end_time }})</option>
-          @endforeach
-        </select>
+   {{-- Tipo de servicio (radios como botones) --}}
+@if($services->count() > 1)
+  @php
+    $selected = old('service_type_id', optional($services->first())->id);
+  @endphp
+
+  <fieldset>
+    <legend class="block font-medium mb-2">Tipo de servicio:</legend>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+      @foreach($services as $srv)
+        @php $rid = 'srv_'.$srv->id; @endphp
+
+        <div class="relative">
+          <input
+            type="radio"
+            name="service_type_id"
+            id="{{ $rid }}"
+            value="{{ $srv->id }}"
+            class="peer sr-only"
+            {{ (string)$selected === (string)$srv->id ? 'checked' : '' }}
+            {{ $loop->first ? 'required' : '' }}
+          >
+          <label for="{{ $rid }}"
+                 class="block border rounded px-4 py-3 cursor-pointer text-center
+                        hover:border-green-600
+                        peer-checked:bg-green-600 peer-checked:text-white peer-checked:border-green-600">
+            <span class="font-medium">{{ $srv->name }}</span>
+            <span class="block text-sm text-gray-600 peer-checked:text-white">
+              {{ $srv->start_time }}–{{ $srv->end_time }}
+            </span>
+          </label>
+        </div>
+      @endforeach
+    </div>
+  </fieldset>
+
+@elseif($services->count() === 1)
+  @php $srv = $services->first(); $rid = 'srv_'.$srv->id; @endphp
+  <fieldset>
+    <legend class="block font-medium mb-2">Tipo de servicio:</legend>
+    <div class="grid grid-cols-1 gap-2">
+      <div class="relative">
+        <input type="radio" name="service_type_id" id="{{ $rid }}" value="{{ $srv->id }}" class="peer sr-only" checked required>
+        <label for="{{ $rid }}"
+               class="block border rounded px-4 py-3 cursor-pointer text-center
+                      peer-checked:bg-green-600 peer-checked:text-white peer-checked:border-green-600">
+          <span class="font-medium">{{ $srv->name }}</span>
+          <span class="block text-sm text-gray-600 peer-checked:text-white">
+            {{ $srv->start_time }}–{{ $srv->end_time }}
+          </span>
+        </label>
       </div>
-    @elseif($services->count() === 1)
-      @php $s = $services->first() @endphp
-      <div class="px-4 py-2 border bg-gray-100 rounded">
-        {{ $s->name }} ({{ $s->start_time }}–{{ $s->end_time }})
-      </div>
-      <input type="hidden" name="service_type_id" value="{{ $s->id }}">
-    @else
-      <div class="text-red-600">No hay servicios activos.</div>
-    @endif
+    </div>
+  </fieldset>
+
+@else
+  <div class="text-red-600">No hay servicios activos.</div>
+@endif
+
 
         <button type="submit"
                 class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 w-full">
             Registrar comida
         </button>
     </form>
-
+ {{-- ÚLTIMOS 10 REGISTROS --}}
+  <div class="mt-8 max-w-3xl mx-auto">
+    <h2 class="text-xl font-semibold mb-4">Últimos 3 registros</h2>
+    <div class="overflow-x-auto">
+      <table class="w-full bg-white border">
+        <thead>
+          <tr class="bg-gray-100">
+            <th class="border px-4 py-2">Fecha y Hora</th>
+            <th class="border px-4 py-2">Trabajador</th>
+            <th class="border px-4 py-2">Empresa</th>
+            <th class="border px-4 py-2">Servicio</th>
+          </tr>
+        </thead>
+        <tbody>
+          @forelse($recent as $rec)
+            <tr>
+              <td class="border px-4 py-2">{{ $rec->registered_at->format('Y-m-d H:i') }}</td>
+              <td class="border px-4 py-2">{{ $rec->worker->name }}</td>
+              <td class="border px-4 py-2">{{ $rec->worker->company->name }}</td>
+              <td class="border px-4 py-2">{{ $rec->serviceType->name }}</td>
+            </tr>
+          @empty
+            <tr>
+              <td colspan="4" class="border px-4 py-4 text-center text-gray-600">
+                No hay registros aún.
+              </td>
+            </tr>
+          @endforelse
+        </tbody>
+      </table>
+    </div>
+  </div>
     <canvas id="canvas" class="hidden"></canvas>
     <script src="https://unpkg.com/tesseract.js@v4.0.2/dist/tesseract.min.js"></script>
+<script>
+(() => {
+  const $rut  = document.getElementById('rut');
+  const $form = document.getElementById('meal-form');
 
-    <script>
-    (async function() {
-        const video        = document.getElementById('video');
-        const cameraSelect = document.getElementById('cameraSelect');
-        let currentStream  = null;
+  // --- Extracción estricta
+  function extractRun(s) {
+    const str = String(s || '');
 
-        // 1. Enumerar dispositivos y llenar el select
-        async function getCameras() {
-            const devices = await navigator.mediaDevices.enumerateDevices();
-            const videoInputs = devices.filter(d => d.kind === 'videoinput');
-            cameraSelect.innerHTML = '';
-            videoInputs.forEach((device, idx) => {
-                const label = device.label || `Cámara ${idx+1}`;
-                const opt = document.createElement('option');
-                opt.value = device.deviceId;
-                opt.text  = label;
-                cameraSelect.appendChild(opt);
-            });
-        }
+    // 1) Prioriza token justo después de RUN y antes del siguiente "/"
+    const mRun = str.match(/RUN(?:[=¿:._\- ]+)?([^\/\s]+)(?=\/|$)/i);
+    if (mRun) return mRun[1];
 
-        // 2. Iniciar el stream con el deviceId seleccionado
-        async function startStream() {
-            if (currentStream) {
-                currentStream.getTracks().forEach(t => t.stop());
-            }
-            const deviceId = cameraSelect.value;
-            const constraints = {
-                video: { 
-                    deviceId: deviceId ? { exact: deviceId } : undefined,
-                    facingMode: "environment"
-                }
-            };
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia(constraints);
-                currentStream = stream;
-                video.srcObject  = stream;
-            } catch (err) {
-                document.getElementById('status').textContent = 'Error cámara: ' + err.message;
-            }
-        }
+    // 2) Si aparece MRZ en el texto, no usamos fallback (evita capturar la cola)
+    if (/mrz/i.test(str)) return null;
 
-        // 3. Al cambiar de cámara, reiniciar stream
-        cameraSelect.onchange = startStream;
+    // 3) Fallback SOLO si no hay MRZ: 5–8 dígitos + DV (dígito o K)
+    const mAny = str.match(/(?<!\d)(\d{5,8})[.’' \-]?([0-9kK])(?!\d)/);
+    if (mAny) return mAny[1] + mAny[2];
 
-        // 4. Poblamos cámaras y arrancamos
-        await getCameras();
-        await startStream();
+    return null;
+  }
 
-        // 5. Preparar OCR
-        const canvas = document.getElementById('canvas');
-        const status = document.getElementById('status');
-        const rutInput = document.getElementById('rut');
-        const worker = Tesseract.createWorker({ logger: ()=>{} });
-        await worker.load();
-        await worker.loadLanguage('spa');
-        await worker.initialize('spa');
+  // --- Normalización y verificación
+  function normalizeRun(token) {
+    if (!token) return null;
+    const clean = token.replace(/[^\dKk]/g, '').toUpperCase();
+    if (clean.length < 2) return null;
+    const cuerpo = clean.slice(0, -1);
+    const dv     = clean.slice(-1);
+    if (cuerpo.length < 5 || cuerpo.length > 8) return null;
+    return `${cuerpo}-${dv}`;
+  }
 
-        // 6. Escaneo periódico
-        let scanning = false;
-        async function captureAndOcr() {
-            if (scanning || rutInput.value) return;
-            scanning = true;
-            status.textContent = 'Procesando OCR...';
+  function calculaDV(cuerpo) {
+    let sum = 0, mul = 2;
+    for (let i = cuerpo.length - 1; i >= 0; i--) {
+      sum += parseInt(cuerpo[i], 10) * mul;
+      mul = (mul === 7) ? 2 : mul + 1;
+    }
+    const res = 11 - (sum % 11);
+    return res === 11 ? '0' : res === 10 ? 'K' : String(res);
+  }
 
-            canvas.width  = video.videoWidth;
-            canvas.height = video.videoHeight;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0);
+  function formatIfPossible(setValidity = true) {
+    const candidate = extractRun($rut.value);
+    const formatted = normalizeRun(candidate);
+    if (!formatted) {
+      if (setValidity) $rut.setCustomValidity('RUN no reconocido. Pegue la línea con RUN… o escriba 12345678-9.');
+      return false;
+    }
+    $rut.value = formatted;
+    if (setValidity) {
+      const [cuerpo, dv] = formatted.split('-');
+      const dvCalc = calculaDV(cuerpo);
+      $rut.setCustomValidity(dv === dvCalc ? '' : 'RUN inválido (DV no coincide).');
+    }
+    return true;
+  }
 
-            const { data:{ text } } = await worker.recognize(canvas);
-            const match = text.match(/(\d{1,2}\.?\d{3}\.?\d{3}-[\dkK])/);
-            if (match) {
-                rutInput.value = match[1].replace(/\./g,'');
-                status.textContent = 'RUT detectado: ' + rutInput.value;
-                clearInterval(interval);
-            } else {
-                status.textContent = 'Buscando RUN...';
-            }
-            scanning = false;
-        }
-        const interval = setInterval(captureAndOcr, 3000);
-    })();
-    </script>
+  // --- 1) Debounce durante el tipeo del escáner
+  let t = null;
+  $rut.addEventListener('input', () => {
+    clearTimeout(t);
+    t = setTimeout(() => formatIfPossible(false), 120); // intenta formatear tras 120ms de inactividad
+  });
+
+  // --- 2) Intercepta Enter/Tab antes de la validación del navegador
+  $rut.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === 'Tab') {
+      const ok = formatIfPossible(true);
+      if (!ok) {
+        e.preventDefault();
+        $rut.reportValidity();
+      }
+      // si ok y era Enter, dejamos que el submit siga normalmente
+    }
+  });
+
+  // También en blur y pegado manual
+  $rut.addEventListener('blur', () => formatIfPossible(true));
+  $rut.addEventListener('paste', () => setTimeout(() => formatIfPossible(true), 0));
+
+  // --- 3) Último seguro antes de enviar
+  $form?.addEventListener('submit', (e) => {
+    const ok = formatIfPossible(true);
+    if (!ok) {
+      e.preventDefault();
+      $rut.reportValidity();
+    }
+  });
+})();
+</script>
+
+  
 @endsection

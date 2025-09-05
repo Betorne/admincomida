@@ -15,7 +15,7 @@ public function create()
 
     $recent = MealRecord::with('worker', 'serviceType')
         ->latest('registered_at')
-        ->take(10)
+        ->take(3)
         ->get();
 
     return view('meal-record.create', compact('services', 'recent'));
@@ -23,27 +23,28 @@ public function create()
 
 public function store(Request $request)
 {
+
     $request->validate([
         'rut' => 'required|string',
         'service_type_id' => 'required|exists:service_types,id',
     ]);
 
+    //dd($request->all());
     // 1. Buscar al trabajador
     $worker = Worker::where('rut', $request->rut)->first();
-    if (! $worker) {
-        return back()->with('error', 'Trabajador no encontrado');
+  if (!$worker) {
+        return back()->withErrors(['rut' => 'No existe un trabajador con ese RUT.'])->withInput();
     }
 
     $now = now()->format('H:i:s');
     $service =$request->service_type_id;
   
-
-   
-
-
     if (! $service) {
         return back()->with('error', 'No hay servicio activo en este momento');
     }
+
+    $nameService = ServiceType::where('id', $request->service_type_id)->first();
+    
 
     // 3. Crear el registro
     MealRecord::create([
@@ -51,7 +52,7 @@ public function store(Request $request)
         'service_type_id' => $service,
         'registered_at'   => now(),
     ]);
-
-    return back()->with('success', 'Comida registrada: '.$service);
+    
+    return back()->with('success', 'Servicio '.$nameService->name.' , registrado  al Rut'.$request->rut);
 }
 }

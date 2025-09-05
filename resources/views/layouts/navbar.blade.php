@@ -1,29 +1,37 @@
-<!-- resources/views/layouts/navbar.blade.php -->
-<nav class="bg-gray-800 text-white px-6 py-3 shadow-md">
-    <div class="flex justify-between items-center">
-        <div class="text-xl font-bold">Sistema de Colaciones</div>
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <ul class="flex space-x-6 text-sm">
-            <li>
-                <a href="{{ route('companies.index') }}" class="hover:text-yellow-400">Empresas</a>
-            </li>
-            <li>
-                <a href="{{ route('workers.index') }}" class="hover:text-yellow-400">Trabajadores</a>
-            </li>
-       
-            <li>
-                <a href="{{ route('service-types.index') }}" class="hover:text-yellow-400">Tipos de Servicio</a>
-            </li>
-            <li>
-                <a href="{{ route('meal.create') }}" class="hover:text-yellow-400">Registro de Comida</a>
-            </li>
-             <!-- Nuevo enlace a Reportes -->
-                <li>
-        <a href="{{ route('reports.index') }}"
-           class="ml-4 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100">
-          Reportes
-        </a>
-        </li>
-        </ul>
-    </div>
-</nav>
+        <title>{{ config('app.name', 'Laravel') }}</title>
+
+        <!-- Fonts -->
+        <link rel="preconnect" href="https://fonts.bunny.net">
+        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+
+        <!-- Scripts -->
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
+    </head>
+    <body class="font-sans antialiased">
+        <div class="min-h-screen bg-gray-100 bg-gray-900">
+            @include('layouts.navigation')
+
+            <!-- Page Heading -->
+            @hasSection('header')
+                <header class="bg-white shadow">
+                    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+                        @yield('header')
+                    </div>
+                </header>
+            @endif
+
+            <!-- Page Content -->
+            <main>
+                @yield('content')
+            </main>
+        </div>
+        
+    </body>
+</html>

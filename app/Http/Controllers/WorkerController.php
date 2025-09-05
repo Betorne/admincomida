@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Worker;
 use App\Models\Company;
 use Illuminate\Http\Request;
-
+use Illuminate\Validation\Rule; 
 class WorkerController extends Controller
 {
     /**
@@ -43,11 +43,22 @@ class WorkerController extends Controller
      */
     public function store(Request $request)
     {
-           Worker::create($request->only([
-        'name', 'rut', 'email', 'address', 'phone', 'company_id'
-    ]));
+                $request->validate([
+        'name'       => 'required|string|max:255',
+        'rut'        => 'required|string|max:20|unique:workers,rut',
+        'email'      => 'nullable|email|max:255',
+        'phone'      => 'nullable|string|max:20',
+        'company_id' => 'required|exists:companies,id',
+            ], [    
+    'rut.unique' => 'El RUT ya está registrado en otra empresa.',
+    ]);
 
-    return redirect()->route('workers.index');
+
+            Worker::create($request->only(['name','rut','email','phone','company_id']));
+
+            return redirect()->route('workers.index')
+                            ->with('success', 'Trabajador creado correctamente');
+
     }
 
     /**
@@ -72,17 +83,23 @@ class WorkerController extends Controller
      */
     public function update(Request $request, Worker $worker)
     {
-        $request->validate([
-            'name' => 'required',
-            'rut' => 'required',
-            'email' => 'nullable|email',
-            'phone' => 'nullable|string',
-            'company_id' => 'nullable|exists:companies,id',
+         $request->validate([
+        'name'       => 'required|string|max:255',
+        'rut'        => ['required','string','max:20',
+            Rule::unique('workers','rut')->ignore($worker->id),
+        ],
+        'email'      => 'nullable|email|max:255',
+        'phone'      => 'nullable|string|max:20',
+        'company_id' => 'required|exists:companies,id',
+        ],
+        [
+        'rut.unique' => 'El RUT ya está registrado en otra empresa.',
         ]);
 
-        $worker->update($request->all());
+        $worker->update($request->only(['name','rut','email','phone','company_id']));
 
-        return redirect()->route('workers.index')->with('success', 'Trabajador actualizado.');
+        return redirect()->route('workers.index')
+                        ->with('success', 'Trabajador actualizado correctamente');
     }
 
     /**

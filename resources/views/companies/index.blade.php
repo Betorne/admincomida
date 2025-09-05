@@ -19,7 +19,7 @@
                 <td class="border px-4 py-2">{{ $company->name }}</td>
                 <td class="border px-4 py-2">{{ $company->rut }}</td>
                 <td class="border px-4 py-2">
-                   <td class="border px-4 py-2">
+                  
                         <a href="{{ route('companies.edit', $company) }}" class="text-blue-600">Editar</a>
                         |
                         <a href="{{ route('companies.workers', $company) }}" class="ml-2 text-green-600">Ver trabajadores</a>
@@ -31,7 +31,7 @@
                                     onclick="return confirm('¿Eliminar esta empresa?')"
                                     class="text-red-600">Eliminar</button>
                         </form>
-                    </td>
+                    
                 </td>
             </tr>
         @endforeach

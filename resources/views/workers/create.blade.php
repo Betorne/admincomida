@@ -15,7 +15,7 @@
 
       <div>
         <label for="rut" class="block text-sm font-medium text-gray-700 mb-1">RUT Ej: 12123123-3</label>
-        <input type="text" name="rut" id="rut" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 p-3" required>
+        <input type="text" name="rut" id="rut" oninput="checkRut(this)" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 p-3" required>
       </div>
 
       <div>
